@@ -30,3 +30,6 @@ Thumbs.db
 
 # local db / cache
 *.local
+
+# static pages (not tracked)
+static/

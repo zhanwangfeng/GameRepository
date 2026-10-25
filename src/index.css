@@ -468,3 +468,18 @@ body {
   font-weight: 700;
   box-shadow: var(--shadow);
 }
+
+/* Google 横幅广告位（Header 与内容区之间） */
+.ad-banner {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  min-height: 90px;
+  margin: 12px 0;
+  padding: 0 16px;
+}
+.ad-banner ins {
+  width: 728px;
+  max-width: 100%;
+  min-height: 90px;
+}

@@ -9,6 +9,7 @@ import { BottomBar } from './components/BottomBar'
 import { SelectedDrawer } from './components/SelectedDrawer'
 import { SubmitDialog } from './components/SubmitDialog'
 import { HistoryDrawer } from './components/HistoryDrawer'
+import { AdSlot } from './components/AdSlot'
 import { useHistory } from './hooks/useHistory'
 
 export default function App() {
@@ -120,6 +121,7 @@ export default function App() {
 
   return (
     <div>
+      <AdSlot slot="1214720725" />
       <Header platform={platform} />
       {init && (
         <>

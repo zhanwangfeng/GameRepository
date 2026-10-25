@@ -1,0 +1,86 @@
+{
+  "status": true,
+  "msg": "ok",
+  "data": {
+    "cate_list": [
+      {
+        "id": 48,
+        "typename": "ps4"
+      }
+    ],
+    "hard_disk": [
+      {
+        "type": 0,
+        "id": 1,
+        "capacity": 7050,
+        "title": "8T = 7.05T",
+        "submit": "8T"
+      },
+      {
+        "type": 0,
+        "id": 2,
+        "capacity": 3100,
+        "title": "4T = 3.10T",
+        "submit": "4T"
+      },
+      {
+        "type": 0,
+        "id": 3,
+        "capacity": 1450,
+        "title": "2T = 1.45T",
+        "submit": "2T"
+      },
+      {
+        "type": 0,
+        "id": 4,
+        "capacity": 720,
+        "title": "1T = 720G",
+        "submit": "1T"
+      },
+      {
+        "type": 0,
+        "id": 5,
+        "capacity": 330,
+        "title": "500G = 330G",
+        "submit": "500G"
+      }
+    ],
+    "attach_hard_disk": [
+      {
+        "type": 1,
+        "id": 11,
+        "capacity": 7050,
+        "title": "8T = 7.05T",
+        "submit": "8T"
+      },
+      {
+        "type": 1,
+        "id": 12,
+        "capacity": 3100,
+        "title": "4T = 3.10T",
+        "submit": "4T"
+      },
+      {
+        "type": 1,
+        "id": 13,
+        "capacity": 1450,
+        "title": "2T = 1.45T",
+        "submit": "2T"
+      },
+      {
+        "type": 1,
+        "id": 14,
+        "capacity": 720,
+        "title": "1T = 720G",
+        "submit": "1T"
+      },
+      {
+        "type": 1,
+        "id": 15,
+        "capacity": 330,
+        "title": "500G = 330G",
+        "submit": "500G"
+      }
+    ]
+  }
+}

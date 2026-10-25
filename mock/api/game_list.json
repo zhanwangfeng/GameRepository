@@ -1,0 +1,132 @@
+{
+  "status": true,
+  "msg": "ok",
+  "data": {
+    "total": 640,
+    "per_page": 12,
+    "current_page": 1,
+    "last_page": 54,
+    "data": [
+      {
+        "aid": "1",
+        "flag": "1",
+        "title": "F1 2024【竞速类 单人】",
+        "litpic": "/game_logo/1.jpg",
+        "is_news": 0,
+        "gamesize": "55.8",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "340",
+        "flag": "340",
+        "title": "【金】刺客信条英灵殿终极版 【【动作冒险 单人】 】",
+        "litpic": "/game_logo/340.jpg",
+        "is_news": 0,
+        "gamesize": "113",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "790",
+        "flag": "790",
+        "title": "WWWE2K25【动作格斗类双人 】",
+        "litpic": "/game_logo/790.jpg",
+        "is_news": 0,
+        "gamesize": "90",
+        "gametype": "",
+        "language": "英文"
+      },
+      {
+        "aid": "719",
+        "flag": "719",
+        "title": "【金】原子之心【 角色扮演动作类 单人】",
+        "litpic": "/game_logo/719.jpg",
+        "is_news": 0,
+        "gamesize": "24",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "100",
+        "flag": "100",
+        "title": "【金】孤岛惊魂6【 动作射击类 单人】",
+        "litpic": "/game_logo/100.jpg",
+        "is_news": 0,
+        "gamesize": "57",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "105",
+        "flag": "105",
+        "title": "【金】古墓丽影11【动作冒险类 单人 】",
+        "litpic": "/game_logo/105.jpg",
+        "is_news": 0,
+        "gamesize": "23",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "141",
+        "flag": "141",
+        "title": "【金】荒野大镖客2【 开放世界动作冒险射击类 单人】",
+        "litpic": "/game_logo/141.jpg",
+        "is_news": 0,
+        "gamesize": "80",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "151",
+        "flag": "151",
+        "title": " 实况足球2025-魔改24-25赛季冬窗版【体育竞技类 双人 】",
+        "litpic": "/game_logo/151.jpg",
+        "is_news": 0,
+        "gamesize": "170",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "748",
+        "flag": "748",
+        "title": "【金】匹诺曹的谎言【角色扮演动作类 单人 】",
+        "litpic": "/game_logo/748.jpg",
+        "is_news": 0,
+        "gamesize": "15",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "347",
+        "flag": "347",
+        "title": "【金】 仁王2【魂类动作冒险类 单人 】",
+        "litpic": "/game_logo/347.jpg",
+        "is_news": 0,
+        "gamesize": "35",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "888",
+        "flag": "888",
+        "title": "鬼灭之刃  火之神血风谭2【 动作格斗类 双人 】",
+        "litpic": "/game_logo/888.jpg",
+        "is_news": 0,
+        "gamesize": "20",
+        "gametype": "",
+        "language": "中文"
+      },
+      {
+        "aid": "730",
+        "flag": "730",
+        "title": "【金】街霸6【 动作格斗类双人】",
+        "litpic": "/game_logo/730.jpg",
+        "is_news": 0,
+        "gamesize": "35",
+        "gametype": "",
+        "language": "中文"
+      }
+    ]
+  }
+}

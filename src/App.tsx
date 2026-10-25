@@ -32,6 +32,7 @@ export default function App() {
   const [submitOpen, setSubmitOpen] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
   const [toast, setToast] = useState('')
+  const [showTop, setShowTop] = useState(false)
   const { records, save, del } = useHistory()
 
   const reqId = useRef(0)
@@ -57,17 +58,52 @@ export default function App() {
     return () => clearTimeout(t)
   }, [keyword, load])
 
+  // 滚动监听：下滑超过一屏高度时显示"回到顶部"按钮
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > window.innerHeight)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const loadMore = () => {
     if (loading || page >= lastPage) return
     load(keyword, '', page + 1, true)
   }
 
+  // 选择/取消游戏：取消始终允许；新增时若会使剩余容量为负则拒绝并提示
   const toggle = (g: Game) => {
-    setSelected((prev) =>
-      prev.some((x) => x.aid === g.aid)
-        ? prev.filter((x) => x.aid !== g.aid)
-        : [...prev, g],
-    )
+    if (selected.some((x) => x.aid === g.aid)) {
+      setSelected((prev) => prev.filter((x) => x.aid !== g.aid))
+      return
+    }
+    const size = parseFloat(g.gamesize) || 0
+    if (inDiskId === null) {
+      showToast('请先选择内置硬盘')
+      return
+    }
+    if (size - remaining > 0.05) {
+      showToast(`容量不足，该游戏还差 ${(size - remaining).toFixed(1)}G，无法添加`)
+      return
+    }
+    setSelected((prev) => [...prev, g])
+  }
+
+  // 更换/取消硬盘：若变更后剩余容量为负则拒绝并提示（nextIn/nextOut 为变更后的目标）
+  const changeDisk = (nextIn: number | null, nextOut: number | null) => {
+    if (nextOut !== null && nextIn === null) {
+      showToast('请先选择内置硬盘')
+      return
+    }
+    const nextCap =
+      (init?.hard_disk.find((d) => d.id === nextIn)?.capacity || 0) +
+      (init?.attach_hard_disk.find((d) => d.id === nextOut)?.capacity || 0)
+    if (nextCap - selectedSize < -0.05) {
+      showToast(`变更后容量不够，请先取消部分游戏`)
+      return
+    }
+    setInDiskId(nextIn)
+    setOutDiskId(nextOut)
   }
 
   const selectedIds = selected.map((g) => g.aid)
@@ -80,7 +116,7 @@ export default function App() {
 
   const showToast = (m: string) => {
     setToast(m)
-    setTimeout(() => setToast(''), 1800)
+    setTimeout(() => setToast(''), 3600)
   }
 
   const doSubmit = async (form: { phone: string; fullname: string }) => {
@@ -130,8 +166,9 @@ export default function App() {
             external={init.attach_hard_disk}
             inDiskId={inDiskId}
             outDiskId={outDiskId}
-            onIn={setInDiskId}
-            onOut={setOutDiskId}
+            onIn={(id) => changeDisk(id, outDiskId)}
+            onOut={(id) => changeDisk(inDiskId, id)}
+            onBuiltInCancel={() => showToast('内置硬盘不可取消，请选择其他容量')}
           />
           <CapacityBar
             selectedCount={selected.length}
@@ -186,6 +223,16 @@ export default function App() {
       />
 
       <div className="platform-badge">{platform}</div>
+
+      {showTop && (
+        <button
+          className="back-top"
+          aria-label="回到顶部"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          ↑
+        </button>
+      )}
 
       {toast && <div className="toast">{toast}</div>}
     </div>

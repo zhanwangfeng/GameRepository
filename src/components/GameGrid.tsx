@@ -40,7 +40,9 @@ function GameCard({
         </div>
         <div className="card-tags">
           {(game.tags || []).slice(0, 3).map((t) => (
-            <span className="ct" key={t}>{t}</span>
+            <span className="ct" key={t}>
+              {t}
+            </span>
           ))}
           {(game.tags || []).length > 3 && (
             <span className="ct ct-more">+{(game.tags || []).length - 3}</span>
@@ -67,25 +69,29 @@ export function GameGrid({
   loading: boolean
 }) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
-  const [shown, setShown] = useState(false)
+  // 记录哨兵上一次的可见状态，仅在其“由不可见切到可见”的瞬间触发一次加载，
+  // 防止客户端瞬时加载（无服务端 loading 门控）造成的连续级联把整列一次性拉完。
+  const prevIntersecting = useRef(false)
+  // onLoadMore 每次渲染都是新函数，用 ref 持有最新引用，避免 observer 反复重建。
+  const onLoadMoreRef = useRef(onLoadMore)
+  onLoadMoreRef.current = onLoadMore
 
-  // 监听底部哨兵元素：进入视口（提前 200px）即视为需要加载
   useEffect(() => {
     const el = sentinelRef.current
     if (!el) return
     const ob = new IntersectionObserver(
-      (entries) => setShown(entries[0].isIntersecting),
+      (entries) => {
+        const isIntersecting = entries[0].isIntersecting
+        if (isIntersecting && !prevIntersecting.current) {
+          onLoadMoreRef.current()
+        }
+        prevIntersecting.current = isIntersecting
+      },
       { rootMargin: '200px' },
     )
     ob.observe(el)
     return () => ob.disconnect()
   }, [])
-
-  // 当哨兵可见、还有更多、且当前未在加载时，自动加载下一页
-  // loading 回到 false 后若仍可见则继续累加（连续滚动自动加载）
-  useEffect(() => {
-    if (shown && hasMore && !loading) onLoadMore()
-  }, [shown, hasMore, loading, onLoadMore])
 
   return (
     <>
@@ -103,7 +109,9 @@ export function GameGrid({
         {loading ? (
           <div className="spinner" />
         ) : hasMore ? (
-          '上拉加载更多'
+          <span className="loadmore-btn" onClick={onLoadMore}>
+            上拉加载更多
+          </span>
         ) : (
           '没有更多了'
         )}

@@ -31,5 +31,8 @@ Thumbs.db
 # local db / cache
 *.local
 
+# CodeBuddy project data (not source)
+.codebuddy/
+
 # static pages (not tracked)
 static/

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import type { Game, InitData, HistoryRecord } from './types'
-import { fetchInit, fetchGames, submit, getPlatform } from './api'
+import { fetchInit, fetchGames, fetchTagOptions, submit, getPlatform } from './api'
 import { Header } from './components/Header'
 import { DiskSelector } from './components/DiskSelector'
 import { CapacityBar } from './components/CapacityBar'
@@ -18,6 +18,7 @@ export default function App() {
     document.title = `${platform} 游戏选装`
   }, [platform])
   const [init, setInit] = useState<InitData | null>(null)
+  const [tagOptions, setTagOptions] = useState<string[]>([])
   const [keyword, setKeyword] = useState('')
   const [games, setGames] = useState<Game[]>([])
   const [page, setPage] = useState(1)
@@ -27,6 +28,11 @@ export default function App() {
   const [selected, setSelected] = useState<Game[]>([])
   const [inDiskId, setInDiskId] = useState<number | null>(null)
   const [outDiskId, setOutDiskId] = useState<number | null>(null)
+
+  const [tags, setTags] = useState<string[]>([])
+  const [sort, setSort] = useState<'none' | 'asc' | 'desc'>('none')
+  const [capMin, setCapMin] = useState<number | null>(null)
+  const [capMax, setCapMax] = useState<number | null>(null)
 
   const [selOpen, setSelOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
@@ -39,12 +45,13 @@ export default function App() {
 
   useEffect(() => {
     fetchInit().then(setInit)
+    fetchTagOptions().then(setTagOptions)
   }, [])
 
-  const load = useCallback(async (kw: string, t: string, p: number, append: boolean) => {
+  const load = useCallback(async (kw: string, tagsArr: string[], p: number, append: boolean) => {
     setLoading(true)
     const my = ++reqId.current
-    const res = await fetchGames({ keywords: kw, page: p, tid: '' })
+    const res = await fetchGames({ keywords: kw, page: p, tid: '', tags: tagsArr })
     if (my !== reqId.current) return
     setGames((prev) => (append ? [...prev, ...res.data] : res.data))
     setLastPage(res.last_page)
@@ -52,11 +59,11 @@ export default function App() {
     setLoading(false)
   }, [])
 
-  // 关键词（防抖）变化 → 重置并加载第 1 页
+  // 关键词、标签筛选（防抖）变化 → 重置并加载第 1 页；两者独立、可同时生效
   useEffect(() => {
-    const t = setTimeout(() => load(keyword, '', 1, false), 300)
+    const t = setTimeout(() => load(keyword, tags, 1, false), 300)
     return () => clearTimeout(t)
-  }, [keyword, load])
+  }, [keyword, tags, load])
 
   // 滚动监听：下滑超过一屏高度时显示"回到顶部"按钮
   useEffect(() => {
@@ -68,7 +75,7 @@ export default function App() {
 
   const loadMore = () => {
     if (loading || page >= lastPage) return
-    load(keyword, '', page + 1, true)
+    load(keyword, tags, page + 1, true)
   }
 
   // 选择/取消游戏：取消始终允许；新增时若会使剩余容量为负则拒绝并提示
@@ -113,6 +120,32 @@ export default function App() {
     (init?.attach_hard_disk.find((d) => d.id === outDiskId)?.capacity || 0)
   const remaining = diskCap - selectedSize
   const canSubmit = selected.length > 0 && diskCap > 0 && remaining >= 0
+
+  // 容量区间筛选 + 容量排序：作用在已加载列表上（客户端），不重新请求；
+  // 关键字/标签仍走服务端筛选，二者在此合并生效。
+  // 区间不合法（min>max 或某端为 NaN）时视为无效，显示全部游戏。
+  const visibleGames = useMemo(() => {
+    let list = games
+    const lo = capMin != null && !isNaN(capMin) ? capMin : null
+    const hi = capMax != null && !isNaN(capMax) ? capMax : null
+    const rangeInvalid = lo != null && hi != null && lo > hi
+    if (!rangeInvalid && (lo != null || hi != null)) {
+      list = list.filter((g) => {
+        const s = parseFloat(g.gamesize) || 0
+        if (lo != null && s < lo - 1e-6) return false
+        if (hi != null && s > hi + 1e-6) return false
+        return true
+      })
+    }
+    if (sort !== 'none') {
+      list = [...list].sort((a, b) => {
+        const sa = parseFloat(a.gamesize) || 0
+        const sb = parseFloat(b.gamesize) || 0
+        return sort === 'asc' ? sa - sb : sb - sa
+      })
+    }
+    return list
+  }, [games, capMin, capMax, sort])
 
   const showToast = (m: string) => {
     setToast(m)
@@ -177,7 +210,7 @@ export default function App() {
             remaining={remaining}
           />
           <GameGrid
-            games={games}
+            games={visibleGames}
             selectedIds={selectedIds}
             onToggle={toggle}
             onLoadMore={loadMore}
@@ -191,10 +224,30 @@ export default function App() {
         selectedCount={selected.length}
         selectedSize={selectedSize}
         remaining={remaining}
+        diskCap={diskCap}
         keyword={keyword}
         onSearch={setKeyword}
         onHistory={() => setHistOpen(true)}
         onView={() => setSelOpen(true)}
+        tagOptions={tagOptions}
+        selectedTags={tags}
+        onToggleTag={(t) =>
+          setTags((prev) =>
+            prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+          )
+        }
+        onClearTags={() => setTags([])}
+        sort={sort}
+        onCycleSort={() =>
+          setSort((s) => (s === 'none' ? 'asc' : s === 'asc' ? 'desc' : 'none'))
+        }
+        capMin={capMin}
+        capMax={capMax}
+        onCapChange={(min, max) => {
+          setCapMin(min)
+          setCapMax(max)
+        }}
+        onRefresh={() => load(keyword, tags, 1, false)}
       />
 
       <SelectedDrawer

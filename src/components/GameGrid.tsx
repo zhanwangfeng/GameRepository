@@ -14,6 +14,11 @@ function GameCard({
   const [err, setErr] = useState(false)
   return (
     <div className={`card ${selected ? 'selected' : ''}`} onClick={onToggle}>
+      {selected && (
+        <div className="sel-mask">
+          <span className="sel-check">✓</span>
+        </div>
+      )}
       <div className="thumb">
         {!err ? (
           <img
@@ -26,13 +31,20 @@ function GameCard({
         ) : (
           <div className="thumb-fallback">{game.title}</div>
         )}
-        <div className="check">{selected ? '✓' : ''}</div>
       </div>
       <div className="info">
         <div className="name">{game.title}</div>
         <div className="meta">
           <span className="tag">{game.gamesize}G</span>
           <span>{game.language}</span>
+        </div>
+        <div className="card-tags">
+          {(game.tags || []).slice(0, 3).map((t) => (
+            <span className="ct" key={t}>{t}</span>
+          ))}
+          {(game.tags || []).length > 3 && (
+            <span className="ct ct-more">+{(game.tags || []).length - 3}</span>
+          )}
         </div>
       </div>
     </div>

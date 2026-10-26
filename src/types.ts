@@ -7,6 +7,7 @@ export interface Game {
   gamesize: string
   gametype: string
   language: string
+  tags?: string[]
 }
 
 export interface DiskOption {

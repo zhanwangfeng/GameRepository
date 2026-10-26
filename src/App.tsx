@@ -228,9 +228,22 @@ export default function App() {
     showToast('已恢复该清单')
   }
 
+  // 广告 slot 来自 .env：VITE_AD_SLOT_TOP / VITE_AD_SLOT_LEFT / VITE_AD_SLOT_RIGHT
+  // （左右位未配置则不渲染）；发布者 ID 由 VITE_ADSENSE_CLIENT 控制（见 adsense.ts）。
+  const adSlotTop = ((import.meta.env as any).VITE_AD_SLOT_TOP as string | undefined) ?? '1214720725'
+  const adSlotLeft = (import.meta.env as any).VITE_AD_SLOT_LEFT as string | undefined
+  const adSlotRight = (import.meta.env as any).VITE_AD_SLOT_RIGHT as string | undefined
+
   return (
     <div>
-      <AdSlot slot="1214720725" />
+      <AdSlot slot={adSlotTop} />
+      {/* 左右两侧固定广告栏：slot 来自 .env，仅 PC 端显示、移动端隐藏（见 index.css .ad-sidebar） */}
+      {adSlotLeft && (
+        <AdSlot slot={adSlotLeft} format="vertical" className="ad-sidebar ad-left" />
+      )}
+      {adSlotRight && (
+        <AdSlot slot={adSlotRight} format="vertical" className="ad-sidebar ad-right" />
+      )}
       <Header platform={platform} />
       {init && (
         <>

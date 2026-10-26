@@ -563,6 +563,37 @@ body {
   min-height: 90px;
 }
 
+/* 左右两侧固定广告栏（仅 PC 端显示，移动端隐藏） */
+.ad-sidebar {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 160px;
+  height: 600px;
+  margin: 0;
+  padding: 0;
+  display: block;
+  z-index: 50;
+  overflow: hidden;
+}
+.ad-sidebar.ad-left {
+  left: calc((100vw - 960px) / 2 - 170px);
+}
+.ad-sidebar.ad-right {
+  right: calc((100vw - 960px) / 2 - 170px);
+}
+.ad-sidebar ins {
+  width: 160px !important;
+  height: 600px !important;
+  max-width: 160px !important;
+  min-height: 600px !important;
+}
+@media (max-width: 1280px) {
+  .ad-sidebar {
+    display: none !important;
+  }
+}
+
 /* 筛选栏（淘宝式：标签多选 + 容量过滤） */
 .filter-bar {
   display: flex;

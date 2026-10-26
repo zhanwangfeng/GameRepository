@@ -12,6 +12,9 @@ import { HistoryDrawer } from './components/HistoryDrawer'
 import { AdSlot } from './components/AdSlot'
 import { useHistory } from './hooks/useHistory'
 
+// 展示窗口大小：从“筛选后队列”头部取一段展示，超出部分由“加载更多”逐步揭示
+const PAGE = 24
+
 export default function App() {
   const platform = getPlatform()
   useEffect(() => {
@@ -20,9 +23,9 @@ export default function App() {
   const [init, setInit] = useState<InitData | null>(null)
   const [tagOptions, setTagOptions] = useState<string[]>([])
   const [keyword, setKeyword] = useState('')
-  const [games, setGames] = useState<Game[]>([])
-  const [page, setPage] = useState(1)
-  const [lastPage, setLastPage] = useState(1)
+  // 已加载的全部游戏（首次进入时一次性从服务端拉取的全量集合，多页已合并）
+  const [allGames, setAllGames] = useState<Game[]>([])
+  const [displayCount, setDisplayCount] = useState(PAGE)
   const [loading, setLoading] = useState(false)
 
   const [selected, setSelected] = useState<Game[]>([])
@@ -43,29 +46,53 @@ export default function App() {
 
   const reqId = useRef(0)
 
+  // 一次性拉取全量游戏（并行请求所有分页，不带任何筛选条件）。之后关键词/标签/容量/排序
+  // 全部在客户端对这份完整集合进行，不再请求服务端，避免“默认顺序→指定排序”的闪烁。
+  const loadAll = useCallback(async () => {
+    setLoading(true)
+    const my = ++reqId.current
+    try {
+      const first = await fetchGames({ keywords: '', page: 1, tid: '', tags: [] })
+      if (my !== reqId.current) return
+      let all = [...first.data]
+      const last = Math.max(1, first.last_page || 1)
+      if (last > 1) {
+        const rest = await Promise.all(
+          Array.from({ length: last - 1 }, (_, i) =>
+            fetchGames({ keywords: '', page: i + 2, tid: '', tags: [] }),
+          ),
+        )
+        if (my !== reqId.current) return
+        for (const r of rest) if (r?.data?.length) all = all.concat(r.data)
+      }
+      if (my !== reqId.current) return
+      // 彻底卸载旧数据：用全新集合整体替换。
+      // 注意：服务端分页可能把同一游戏重复返回（相同 aid 出现在多页），
+      // 若不按 aid 去重，GameGrid 用 key={g.aid} 渲染时会产生 key 冲突，
+      // 导致首个同 aid 的卡片被错误复用/冻结（不再响应筛选排序，且 onClick
+      // 闭包停留在挂载时的旧 inDiskId===null 状态，点一下就误报“请选择内置硬盘”）。
+      const seen = new Set<string>()
+      const unique: Game[] = []
+      for (const g of all) {
+        if (!g.aid || seen.has(g.aid)) continue
+        seen.add(g.aid)
+        unique.push(g)
+      }
+      setAllGames(unique)
+      setDisplayCount(PAGE)
+    } finally {
+      if (my === reqId.current) setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     fetchInit().then(setInit)
     fetchTagOptions().then(setTagOptions)
-  }, [])
+    // 进入即拉取全量游戏；后续所有筛选/排序均为纯前端
+    loadAll()
+  }, [loadAll])
 
-  const load = useCallback(async (kw: string, tagsArr: string[], p: number, append: boolean) => {
-    setLoading(true)
-    const my = ++reqId.current
-    const res = await fetchGames({ keywords: kw, page: p, tid: '', tags: tagsArr })
-    if (my !== reqId.current) return
-    setGames((prev) => (append ? [...prev, ...res.data] : res.data))
-    setLastPage(res.last_page)
-    setPage(p)
-    setLoading(false)
-  }, [])
-
-  // 关键词、标签筛选（防抖）变化 → 重置并加载第 1 页；两者独立、可同时生效
-  useEffect(() => {
-    const t = setTimeout(() => load(keyword, tags, 1, false), 300)
-    return () => clearTimeout(t)
-  }, [keyword, tags, load])
-
-  // 滚动监听：下滑超过一屏高度时显示"回到顶部"按钮
+  // 滚动监听：下滑超过一屏高度时显示“回到顶部”按钮
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > window.innerHeight)
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -73,9 +100,14 @@ export default function App() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // 关键词 / 标签 / 容量区间 / 排序 变化（全部为客户端对完整集合的筛选与排序，无需重新请求）：回到队列头部
+  useEffect(() => {
+    setDisplayCount(PAGE)
+  }, [keyword, tags, capMin, capMax, sort])
+
+  // 加载更多：仅从已筛选排序的队列中向尾部揭示更多，不再请求服务端、不再重排已显示项
   const loadMore = () => {
-    if (loading || page >= lastPage) return
-    load(keyword, tags, page + 1, true)
+    setDisplayCount((c) => Math.min(c + PAGE, queue.length))
   }
 
   // 选择/取消游戏：取消始终允许；新增时若会使剩余容量为负则拒绝并提示
@@ -121,11 +153,15 @@ export default function App() {
   const remaining = diskCap - selectedSize
   const canSubmit = selected.length > 0 && diskCap > 0 && remaining >= 0
 
-  // 容量区间筛选 + 容量排序：作用在已加载列表上（客户端），不重新请求；
-  // 关键字/标签仍走服务端筛选，二者在此合并生效。
-  // 区间不合法（min>max 或某端为 NaN）时视为无效，显示全部游戏。
-  const visibleGames = useMemo(() => {
-    let list = games
+  // 关键词（标题包含，忽略大小写）/ 标签（AND，须同时包含所有选中标签）/ 容量区间筛选 + 容量排序：
+  // 作用在“已加载的全部游戏”上，得到稳定、统一的筛选后队列。
+  const queue = useMemo(() => {
+    const kw = keyword.trim().toLowerCase()
+    let list = allGames.filter((g) => {
+      if (kw && !g.title.toLowerCase().includes(kw)) return false
+      if (tags.length && !tags.every((t) => (g.tags || []).includes(t))) return false
+      return true
+    })
     const lo = capMin != null && !isNaN(capMin) ? capMin : null
     const hi = capMax != null && !isNaN(capMax) ? capMax : null
     const rangeInvalid = lo != null && hi != null && lo > hi
@@ -145,7 +181,11 @@ export default function App() {
       })
     }
     return list
-  }, [games, capMin, capMax, sort])
+  }, [allGames, keyword, tags, capMin, capMax, sort])
+
+  // 仅展示筛选后队列头部的部分数据
+  const displayGames = useMemo(() => queue.slice(0, displayCount), [queue, displayCount])
+  const hasMore = displayCount < queue.length
 
   const showToast = (m: string) => {
     setToast(m)
@@ -210,11 +250,11 @@ export default function App() {
             remaining={remaining}
           />
           <GameGrid
-            games={visibleGames}
+            games={displayGames}
             selectedIds={selectedIds}
             onToggle={toggle}
             onLoadMore={loadMore}
-            hasMore={page < lastPage}
+            hasMore={hasMore}
             loading={loading}
           />
         </>
@@ -247,7 +287,7 @@ export default function App() {
           setCapMin(min)
           setCapMax(max)
         }}
-        onRefresh={() => load(keyword, tags, 1, false)}
+        onRefresh={() => loadAll()}
       />
 
       <SelectedDrawer

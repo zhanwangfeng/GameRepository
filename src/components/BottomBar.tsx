@@ -53,7 +53,6 @@ function SearchDialog({
           tagOptions={tagOptions}
           selectedTags={selectedTags}
           onToggleTag={onToggleTag}
-          onClearTags={onClearTags}
           sort={sort}
           onCycleSort={onCycleSort}
           capMin={capMin}

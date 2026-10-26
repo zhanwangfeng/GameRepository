@@ -574,6 +574,14 @@ body {
   padding-top: 6px;
   min-width: 32px;
 }
+.filter-count {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--primary);
+  white-space: nowrap;
+}
 .filter-tags {
   flex: 1;
   display: flex;

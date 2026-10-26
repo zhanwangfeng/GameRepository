@@ -6,7 +6,6 @@ export function FilterBar({
   tagOptions,
   selectedTags,
   onToggleTag,
-  onClearTags,
   sort,
   onCycleSort,
   capMin,
@@ -16,7 +15,6 @@ export function FilterBar({
   tagOptions: string[]
   selectedTags: string[]
   onToggleTag: (t: string) => void
-  onClearTags: () => void
   sort: SortMode
   onCycleSort: () => void
   capMin: number | null
@@ -60,7 +58,12 @@ export function FilterBar({
     <div className="filter-bar">
       {tagOptions.length > 0 && (
         <div className="filter-row">
-          <div className="filter-label">标签</div>
+          <div className="filter-label">
+            标签
+            {selectedTags.length > 0 && (
+              <span className="filter-count">已选 {selectedTags.length}</span>
+            )}
+          </div>
           <div className="filter-tags">
             {shownTags.map((t) => (
               <button
@@ -118,25 +121,8 @@ export function FilterBar({
             value={maxStr}
             onChange={(e) => handleMax(e.target.value)}
           />
-          {(capMin != null || capMax != null) && (
-            <button
-              type="button"
-              className="cap-clear"
-              onClick={() => onCapChange(null, null)}
-            >
-              清空
-            </button>
-          )}
         </div>
       </div>
-
-      {selectedTags.length > 0 && (
-        <div className="filter-row">
-          <button type="button" className="filter-clear" onClick={onClearTags}>
-            清空标签({selectedTags.length})
-          </button>
-        </div>
-      )}
     </div>
   )
 }

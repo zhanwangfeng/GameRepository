@@ -53,6 +53,54 @@ function GameCard({
   )
 }
 
+// 列表布局：一行一个，图片在左、文字在右，整体高度约为图标卡片的 1/3
+function GameRow({
+  game,
+  selected,
+  onToggle,
+}: {
+  game: Game
+  selected: boolean
+  onToggle: () => void
+}) {
+  const [err, setErr] = useState(false)
+  return (
+    <div
+      className={`list-row ${selected ? 'selected' : ''}`}
+      onClick={onToggle}
+    >
+      <div className="list-thumb">
+        {!err ? (
+          <img
+            className="list-thumb-img"
+            src={gameImage(game)}
+            alt={game.title}
+            loading="lazy"
+            onError={() => setErr(true)}
+          />
+        ) : (
+          <div className="list-thumb-fallback">{game.title}</div>
+        )}
+      </div>
+      <div className="list-info">
+        <div className="list-name">{game.title}</div>
+        <div className="list-second">
+          <span className="tag">{game.gamesize}G</span>
+          <span className="list-lang">{game.language}</span>
+          <span className="list-tags-wrap">
+            {(game.tags || []).map((t) => (
+              <span className="ct" key={t}>
+                {t}
+              </span>
+            ))}
+          </span>
+        </div>
+      </div>
+      {selected && <span className="list-check">✓</span>}
+    </div>
+  )
+}
+
 export function GameGrid({
   games,
   selectedIds,
@@ -60,6 +108,7 @@ export function GameGrid({
   onLoadMore,
   hasMore,
   loading,
+  viewMode,
 }: {
   games: Game[]
   selectedIds: string[]
@@ -67,6 +116,7 @@ export function GameGrid({
   onLoadMore: () => void
   hasMore: boolean
   loading: boolean
+  viewMode: 'icon' | 'list'
 }) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   // 记录哨兵上一次的可见状态，仅在其“由不可见切到可见”的瞬间触发一次加载，
@@ -95,16 +145,29 @@ export function GameGrid({
 
   return (
     <>
-      <div className="grid">
-        {games.map((g) => (
-          <GameCard
-            key={g.aid}
-            game={g}
-            selected={selectedIds.includes(g.aid)}
-            onToggle={() => onToggle(g)}
-          />
-        ))}
-      </div>
+      {viewMode === 'list' ? (
+        <div className="list">
+          {games.map((g) => (
+            <GameRow
+              key={g.aid}
+              game={g}
+              selected={selectedIds.includes(g.aid)}
+              onToggle={() => onToggle(g)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid">
+          {games.map((g) => (
+            <GameCard
+              key={g.aid}
+              game={g}
+              selected={selectedIds.includes(g.aid)}
+              onToggle={() => onToggle(g)}
+            />
+          ))}
+        </div>
+      )}
       <div className="loadmore">
         {loading ? (
           <div className="spinner" />

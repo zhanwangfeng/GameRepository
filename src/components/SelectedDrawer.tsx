@@ -10,6 +10,7 @@ export function SelectedDrawer({
   onClear,
   onSubmit,
   canSubmit,
+  onHistory,
 }: {
   open: boolean
   games: Game[]
@@ -19,6 +20,7 @@ export function SelectedDrawer({
   onClear: () => void
   onSubmit: () => void
   canSubmit: boolean
+  onHistory: () => void
 }) {
   return (
     <>
@@ -63,6 +65,9 @@ export function SelectedDrawer({
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="btn btn-ghost" style={{ flex: 1 }} onClick={onClear}>
               清空
+            </button>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={onHistory}>
+              历史
             </button>
             <button
               className="btn btn-primary"

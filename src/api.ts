@@ -1,11 +1,12 @@
 import type { InitData, GameListResponse, SubmitPayload, Game } from './types'
 
-// 仅 localhost / 127.0.0.1 使用本地 mock；其他域名（生产）默认直连真实接口，
-// 无需再手动关闭。可用 VITE_USE_MOCK=true/false 强制覆盖。
+// 开发模式（Vite dev，含 localhost 与局域网 IP 访问）一律使用本地 mock；
+// 生产构建默认直连真实接口。可用 VITE_USE_MOCK=true/false 强制覆盖。
 const host = location.hostname
 const isLocal = host === 'localhost' || host === '127.0.0.1'
 const forced = import.meta.env.VITE_USE_MOCK
-const USE_MOCK = forced === 'true' || (forced !== 'false' && isLocal)
+const USE_MOCK =
+  import.meta.env.DEV || forced === 'true' || (forced !== 'false' && isLocal)
 
 // mock 数据（位于仓库 mock/api/）
 import initRaw from '../mock/api/init.json'

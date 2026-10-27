@@ -42,6 +42,8 @@ export default function App() {
   const [histOpen, setHistOpen] = useState(false)
   const [toast, setToast] = useState('')
   const [showTop, setShowTop] = useState(false)
+  // 游戏列表展示模式：icon=图标(卡片网格) / list=列表(一行一个，图左文右)
+  const [viewMode, setViewMode] = useState<'icon' | 'list'>('icon')
   const { records, save, del } = useHistory()
 
   const reqId = useRef(0)
@@ -269,6 +271,7 @@ export default function App() {
             onLoadMore={loadMore}
             hasMore={hasMore}
             loading={loading}
+            viewMode={viewMode}
           />
         </>
       )}
@@ -280,7 +283,6 @@ export default function App() {
         diskCap={diskCap}
         keyword={keyword}
         onSearch={setKeyword}
-        onHistory={() => setHistOpen(true)}
         onView={() => setSelOpen(true)}
         tagOptions={tagOptions}
         selectedTags={tags}
@@ -301,6 +303,8 @@ export default function App() {
           setCapMax(max)
         }}
         onRefresh={() => loadAll()}
+        viewMode={viewMode}
+        onViewMode={setViewMode}
       />
 
       <SelectedDrawer
@@ -312,6 +316,7 @@ export default function App() {
         onClear={() => setSelected([])}
         onSubmit={() => setSubmitOpen(true)}
         canSubmit={canSubmit}
+        onHistory={() => setHistOpen(true)}
       />
 
       <SubmitDialog

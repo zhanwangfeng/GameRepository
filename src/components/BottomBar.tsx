@@ -15,6 +15,8 @@ function SearchDialog({
   capMin,
   capMax,
   onCapChange,
+  viewMode,
+  onViewMode,
 }: {
   keyword: string
   onSearch: (v: string) => void
@@ -29,6 +31,8 @@ function SearchDialog({
   capMin: number | null
   capMax: number | null
   onCapChange: (min: number | null, max: number | null) => void
+  viewMode: 'icon' | 'list'
+  onViewMode: (m: 'icon' | 'list') => void
 }) {
   // 确认 / 点击遮罩关闭：先刷新一次，再关闭
   const handleClose = () => {
@@ -40,7 +44,6 @@ function SearchDialog({
       <div className="search-panel" onClick={(e) => e.stopPropagation()}>
         <input
           className="search-input"
-          autoFocus
           value={keyword}
           placeholder="输入游戏名称搜索"
           // 输入变更立即生效（App 内已做防抖）
@@ -58,12 +61,14 @@ function SearchDialog({
           capMin={capMin}
           capMax={capMax}
           onCapChange={onCapChange}
+          viewMode={viewMode}
+          onViewMode={onViewMode}
         />
         <div className="search-btns">
           <button
             className="btn btn-ghost"
             onClick={() => {
-              // 清空：关键字 + 标签 + 容量区间 一并重置
+              // 清空：关键字 + 标签 + 容量区间 一并重置（不影响 查看 布局）
               onSearch('')
               onClearTags()
               onCapChange(null, null)
@@ -87,7 +92,6 @@ export function BottomBar({
   diskCap,
   keyword,
   onSearch,
-  onHistory,
   onView,
   tagOptions,
   selectedTags,
@@ -99,6 +103,8 @@ export function BottomBar({
   capMax,
   onCapChange,
   onRefresh,
+  viewMode,
+  onViewMode,
 }: {
   selectedCount: number
   selectedSize: number
@@ -106,7 +112,6 @@ export function BottomBar({
   diskCap: number
   keyword: string
   onSearch: (v: string) => void
-  onHistory: () => void
   onView: () => void
   tagOptions: string[]
   selectedTags: string[]
@@ -118,6 +123,8 @@ export function BottomBar({
   capMax: number | null
   onCapChange: (min: number | null, max: number | null) => void
   onRefresh: () => void
+  viewMode: 'icon' | 'list'
+  onViewMode: (m: 'icon' | 'list') => void
 }) {
   const [open, setOpen] = useState(false)
   const capRatio = diskCap > 0 ? Math.min(1, selectedSize / diskCap) : 0
@@ -156,9 +163,6 @@ export function BottomBar({
         <span className="bb-preview">{keyword || '搜索游戏'}</span>
       </div>
       <div className="bb-actions">
-        <button className="btn btn-ghost" onClick={onHistory}>
-          历史
-        </button>
         <button className="btn btn-primary" onClick={onView}>
           提交
         </button>
@@ -179,6 +183,8 @@ export function BottomBar({
           capMin={capMin}
           capMax={capMax}
           onCapChange={onCapChange}
+          viewMode={viewMode}
+          onViewMode={onViewMode}
         />
       )}
     </div>

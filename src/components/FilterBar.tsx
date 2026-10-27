@@ -11,6 +11,8 @@ export function FilterBar({
   capMin,
   capMax,
   onCapChange,
+  viewMode,
+  onViewMode,
 }: {
   tagOptions: string[]
   selectedTags: string[]
@@ -20,6 +22,8 @@ export function FilterBar({
   capMin: number | null
   capMax: number | null
   onCapChange: (min: number | null, max: number | null) => void
+  viewMode: 'icon' | 'list'
+  onViewMode: (m: 'icon' | 'list') => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const COLLAPSE_AT = 12
@@ -122,6 +126,17 @@ export function FilterBar({
             onChange={(e) => handleMax(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="filter-row">
+        <div className="filter-label">查看</div>
+        <button
+          type="button"
+          className="sort-btn"
+          onClick={() => onViewMode(viewMode === 'icon' ? 'list' : 'icon')}
+        >
+          {viewMode === 'icon' ? '图标' : '列表'}
+        </button>
       </div>
     </div>
   )

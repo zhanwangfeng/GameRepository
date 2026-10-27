@@ -630,11 +630,11 @@ body {
   border: 1px solid #f0b400;
 }
 
-/* platform badge (replaces old history fab position) */
+/* platform badge：贴在 bottom-bar 顶部左侧（bottom-bar 为 fixed，作为定位参照） */
 .platform-badge {
-  position: fixed;
+  position: absolute;
   left: 0;
-  bottom: 92px;
+  bottom: 100%;
   z-index: 30;
   border: 1px solid var(--primary);
   border-left: none;

@@ -105,6 +105,7 @@ export function BottomBar({
   onRefresh,
   viewMode,
   onViewMode,
+  platform,
 }: {
   selectedCount: number
   selectedSize: number
@@ -113,6 +114,7 @@ export function BottomBar({
   keyword: string
   onSearch: (v: string) => void
   onView: () => void
+  platform: string
   tagOptions: string[]
   selectedTags: string[]
   onToggleTag: (t: string) => void
@@ -132,6 +134,7 @@ export function BottomBar({
     remaining < 0 ? 'var(--danger)' : capRatio > 0.85 ? 'var(--warn)' : 'var(--ok)'
   return (
     <div className="bottom-bar">
+      <div className="platform-badge">{platform}</div>
       <div
         className="summary"
         onClick={onView}

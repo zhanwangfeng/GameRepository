@@ -305,6 +305,7 @@ export default function App() {
         onRefresh={() => loadAll()}
         viewMode={viewMode}
         onViewMode={setViewMode}
+        platform={platform}
       />
 
       <SelectedDrawer
@@ -332,8 +333,6 @@ export default function App() {
         onRestore={restore}
         onDelete={del}
       />
-
-      <div className="platform-badge">{platform}</div>
 
       {showTop && (
         <button

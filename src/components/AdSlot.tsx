@@ -33,6 +33,30 @@ export function AdSlot({ slot, format = 'horizontal', className }: AdSlotProps) 
     attempt()
   }, [])
 
+  // AdSense 脚本加载/测量期间会用行内 !important 把容器撑高，
+  // 确认无填充（data-ad-status="unfilled"）又会留大片空白，造成闪烁。
+  // 策略：默认隐藏占位，仅当广告真正填充（"filled"）时才显示，
+  // 并把高度锁在 110px 内，避免空白闪烁与半屏占位。
+  useEffect(() => {
+    const el = ref.current
+    const wrap = el?.parentElement as HTMLElement | null
+    if (!el || !wrap) return
+    const apply = () => {
+      const status = el.getAttribute('data-ad-status')
+      if (status === 'filled') {
+        wrap.style.display = ''
+        el.style.setProperty('max-height', '110px', 'important')
+        el.style.setProperty('overflow', 'hidden', 'important')
+      } else {
+        wrap.style.display = 'none'
+      }
+    }
+    apply()
+    const mo = new MutationObserver(apply)
+    mo.observe(el, { attributes: true, attributeFilter: ['data-ad-status'] })
+    return () => mo.disconnect()
+  }, [])
+
   return (
     <div className={`ad-banner ${className ?? ''}`}>
       <ins

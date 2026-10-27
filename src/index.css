@@ -73,7 +73,7 @@ body {
   align-items: center;
   gap: 10px;
   background: var(--card);
-  border-radius: 0;
+  border-radius: 10px;
   /* 上下内边距移到文字容器，使缩略图能直接顶满整行上下（无负边距 hack） */
   padding: 0 8px;
   margin-bottom: 6px;
@@ -81,8 +81,18 @@ body {
   border: 2px solid transparent;
   position: relative;
   min-height: 60px;
+  overflow: hidden;
 }
 .list-row.selected { border-color: #22c55e; }
+/* 列表选中：在绿边框 + 对勾之外，叠加一层半透明绿色遮罩 */
+.list-row.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(34, 197, 94, 0.16);
+  pointer-events: none;
+  z-index: 1;
+}
 .list-thumb {
   flex: 0 0 auto;
   width: 52px;
@@ -151,6 +161,7 @@ body {
 .list-second .ct-more { background: #e7e9f0; color: #9aa3b2; }
 .list-check {
   position: absolute;
+  z-index: 2;
   right: 8px;
   top: 6px;
   width: 18px;

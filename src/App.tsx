@@ -43,7 +43,7 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [showTop, setShowTop] = useState(false)
   // 游戏列表展示模式：icon=图标(卡片网格) / list=列表(一行一个，图左文右)
-  const [viewMode, setViewMode] = useState<'icon' | 'list'>('icon')
+  const [viewMode, setViewMode] = useState<'icon' | 'list'>('list')
   const { records, save, del } = useHistory()
 
   const reqId = useRef(0)

@@ -39,6 +39,14 @@ export default function App() {
 
   const [selOpen, setSelOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
+  const [successOpen, setSuccessOpen] = useState(false)
+  // 提交成功时对“已选统计”做快照（此时选择状态即将被清空，需提前留存用于成功页展示）
+  const [successStats, setSuccessStats] = useState<{
+    count: number
+    size: number
+    cap: number
+    remaining: number
+  } | null>(null)
   const [histOpen, setHistOpen] = useState(false)
   const [toast, setToast] = useState('')
   const [showTop, setShowTop] = useState(false)
@@ -203,6 +211,13 @@ export default function App() {
       c_id1: outDiskId,
     })
     if (res.status) {
+      // 先快照统计信息（供成功页展示），再清空选择状态
+      setSuccessStats({
+        count: selected.length,
+        size: selectedSize,
+        cap: diskCap,
+        remaining,
+      })
       const record: HistoryRecord = {
         form: { phone: form.phone, fullname: form.fullname, inDiskId, outDiskId },
         selected,
@@ -216,7 +231,7 @@ export default function App() {
       setOutDiskId(null)
       setSubmitOpen(false)
       setSelOpen(false)
-      showToast('提交成功，商家将尽快与您联系')
+      setSuccessOpen(true)
     } else {
       showToast('提交失败：' + res.msg)
     }
@@ -237,9 +252,10 @@ export default function App() {
   const adSlotRight = (import.meta.env as any).VITE_AD_SLOT_RIGHT as string | undefined
 
   return (
-    <div>
-      <AdSlot slot={adSlotTop} />
-      {/* 左右两侧固定广告栏：slot 来自 .env，仅 PC 端显示、移动端隐藏（见 index.css .ad-sidebar） */}
+    <>
+      {/* 主界面：弹出成功页时用 display:none 彻底隔离，避免滚轮穿透到背景 */}
+      <div id="main" style={{ display: successOpen ? 'none' : '' }}>
+        {/* 左右两侧固定广告栏：slot 来自 .env，仅 PC 端显示、移动端隐藏（见 index.css .ad-sidebar） */}
       {adSlotLeft && (
         <AdSlot slot={adSlotLeft} format="vertical" className="ad-sidebar ad-left" />
       )}
@@ -343,8 +359,39 @@ export default function App() {
           ↑
         </button>
       )}
+      </div>
+
+      {/* 与 #main 完全隔离的同层节点：显示时隐藏 #main，滚轮只作用于本窗口自身 */}
+      {successOpen && (
+        <div id="success-screen" className="success-screen">
+          <div className="success-inner">
+            <div className="success-check">✓</div>
+            <h2>提交成功</h2>
+            <p>商家将尽快与您联系</p>
+            {successStats && (
+              <CapacityBar
+                selectedCount={successStats.count}
+                selectedSize={successStats.size}
+                diskCap={successStats.cap}
+                remaining={successStats.remaining}
+                cornerLabel={platform}
+              />
+            )}
+            <AdSlot slot={adSlotTop} />
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setSuccessOpen(false)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+            >
+              完成
+            </button>
+          </div>
+        </div>
+      )}
 
       {toast && <div className="toast">{toast}</div>}
-    </div>
+    </>
   )
 }

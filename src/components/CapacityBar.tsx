@@ -3,17 +3,21 @@ export function CapacityBar({
   selectedSize,
   diskCap,
   remaining,
+  cornerLabel,
 }: {
   selectedCount: number
   selectedSize: number
   diskCap: number
   remaining: number
+  /** 可选：卡片左上角的小标签文案（如平台名），不传则不渲染 */
+  cornerLabel?: string
 }) {
   const ratio = diskCap > 0 ? Math.min(1, selectedSize / diskCap) : 0
   const color =
     remaining < 0 ? 'var(--danger)' : ratio > 0.85 ? 'var(--warn)' : 'var(--ok)'
   return (
     <div className="section">
+      {cornerLabel && <span className="cap-badge platform-badge">{cornerLabel}</span>}
       <div className="cap-card">
         <div className="cap-grid">
           <div className="cap-item">

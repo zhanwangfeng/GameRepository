@@ -641,8 +641,8 @@ body {
   border: 1px solid #f0b400;
 }
 
-/* 全屏“提交成功”界面：覆盖整屏捕获用户操作（模态），内容超高时可滚动 */
-.success-screen {
+/* 全屏“上传”界面：覆盖整屏捕获用户操作（模态），内容超高时可滚动 */
+.upload-screen {
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -652,7 +652,7 @@ body {
   overflow-y: auto;
   padding: 24px;
 }
-.success-inner {
+.upload-inner {
   width: 100%;
   max-width: 520px;
   margin: auto;
@@ -663,11 +663,11 @@ body {
   gap: 10px;
 }
 /* 统计卡片左上角的小标签（如平台名），仅在传入 cornerLabel 时渲染 */
-.success-inner .section {
+.upload-inner .section {
   position: relative;
 }
 /* 复用 platform-badge 的配色/字体，仅在此用更高优先级覆盖定位，使其水平居中浮于统计卡片上边框 */
-.success-inner .cap-badge {
+.upload-inner .cap-badge {
   bottom: auto;
   top: -15px;
   left: 50%;
@@ -690,24 +690,71 @@ body {
   margin-bottom: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
-.success-inner h2 {
+/* 上传中：进度圈（SVG 描边，受 MIN_UPLOAD_MS 控制推进） */
+.upload-progress {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 6px;
+}
+.upload-progress svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.upload-progress .track {
+  fill: none;
+  stroke: var(--primary-weak);
+  stroke-width: 8;
+}
+.upload-progress .bar {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.2s linear;
+}
+.upload-progress .pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+/* 上传失败：红色叉号圆标 */
+.upload-failed-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  font-size: 40px;
+  line-height: 72px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.upload-inner h2 {
   margin: 0;
   font-size: 24px;
 }
-.success-inner p {
+.upload-inner p {
   margin: 0;
   color: var(--muted);
   font-size: 15px;
 }
-.success-inner .section {
+.upload-inner .section {
   width: 100%;
   padding: 0;
   margin: 14px 0 0;
 }
-.success-inner .ad-banner {
+.upload-inner .ad-banner {
   margin: 18px 0 6px;
 }
-.success-inner .btn {
+.upload-inner .btn {
   margin-top: 8px;
   width: 160px;
   padding: 12px 0;

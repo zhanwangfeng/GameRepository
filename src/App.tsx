@@ -10,7 +10,12 @@ import { SelectedDrawer } from './components/SelectedDrawer'
 import { SubmitDialog } from './components/SubmitDialog'
 import { HistoryDrawer } from './components/HistoryDrawer'
 import { AdSlot } from './components/AdSlot'
+import { UploadScreen } from './components/UploadScreen'
 import { useHistory } from './hooks/useHistory'
+
+// 上传界面最短展示时长：无论接口响应多快，都保持“上传中”状态至少这么久，
+// 给广告留出加载/填充的时间（见 startUpload）。
+const MIN_UPLOAD_MS = 3000
 
 // 展示窗口大小：从“筛选后队列”头部取一段展示，超出部分由“加载更多”逐步揭示
 const PAGE = 24
@@ -39,14 +44,22 @@ export default function App() {
 
   const [selOpen, setSelOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
-  const [successOpen, setSuccessOpen] = useState(false)
-  // 提交成功时对“已选统计”做快照（此时选择状态即将被清空，需提前留存用于成功页展示）
+  // 上传界面阶段：uploading=上传中 / success=上传成功 / failed=上传失败 / null=未显示
+  const [uploadStage, setUploadStage] = useState<
+    'uploading' | 'success' | 'failed' | null
+  >(null)
+  // 提交成功/上传成功时对“已选统计”做快照（选择状态清空后用于界面展示）
   const [successStats, setSuccessStats] = useState<{
     count: number
     size: number
     cap: number
     remaining: number
   } | null>(null)
+  const [uploadError, setUploadError] = useState('')
+  // 上传进度（0-100）：0→90% 由 MIN_UPLOAD_MS 计时推进，最后 10% 在接口返回时补全
+  const [uploadProgress, setUploadProgress] = useState(0)
+  // 暂存最近一次提交的表单，供上传失败后的“重试”复用
+  const pendingForm = useRef<{ phone: string; fullname: string } | null>(null)
   const [histOpen, setHistOpen] = useState(false)
   const [toast, setToast] = useState('')
   const [showTop, setShowTop] = useState(false)
@@ -202,38 +215,71 @@ export default function App() {
     setTimeout(() => setToast(''), 3600)
   }
 
-  const doSubmit = async (form: { phone: string; fullname: string }) => {
-    const res = await submit({
-      phone: form.phone,
-      fullname: form.fullname,
-      game: selectedIds.join(','),
-      c_id: inDiskId,
-      c_id1: outDiskId,
+  // 点击确认提交后立即弹出上传界面：先快照统计、关闭弹窗、进入“上传中”，
+  // 接口请求与固定最短时长都完成后才切换到成功/失败，保证广告有加载时间。
+  const startUpload = async (form: { phone: string; fullname: string }) => {
+    pendingForm.current = form
+    // 立即快照统计信息（供后续成功页展示），并记录历史条目
+    setSuccessStats({
+      count: selected.length,
+      size: selectedSize,
+      cap: diskCap,
+      remaining,
     })
-    if (res.status) {
-      // 先快照统计信息（供成功页展示），再清空选择状态
-      setSuccessStats({
-        count: selected.length,
-        size: selectedSize,
-        cap: diskCap,
-        remaining,
+    const record: HistoryRecord = {
+      form: { phone: form.phone, fullname: form.fullname, inDiskId, outDiskId },
+      selected,
+      createDate: new Date().toLocaleString('zh-CN'),
+      timeStamp: Date.now(),
+      submitted: true,
+    }
+    // 关闭提交弹窗与已选抽屉，立即展示上传界面（此时主界面被隐藏）
+    setSubmitOpen(false)
+    setSelOpen(false)
+    setUploadError('')
+    setUploadProgress(0)
+    setUploadStage('uploading')
+
+    const started = Date.now()
+    // 进度驱动：0→90% 在 MIN_UPLOAD_MS 内线性推进，超过则停在 90%（预留最后 10%）
+    const timer = setInterval(() => {
+      const e = Date.now() - started
+      setUploadProgress(Math.min(90, (e / MIN_UPLOAD_MS) * 90))
+    }, 50)
+
+    let res: { status: boolean; msg: string }
+    try {
+      res = await submit({
+        phone: form.phone,
+        fullname: form.fullname,
+        game: selectedIds.join(','),
+        c_id: inDiskId,
+        c_id1: outDiskId,
       })
-      const record: HistoryRecord = {
-        form: { phone: form.phone, fullname: form.fullname, inDiskId, outDiskId },
-        selected,
-        createDate: new Date().toLocaleString('zh-CN'),
-        timeStamp: Date.now(),
-        submitted: true,
-      }
+    } catch (e) {
+      res = { status: false, msg: '网络异常，请稍后重试' }
+    }
+
+    // 固定最短上传时长：无论接口响应多快，都保持“上传中”状态至少 MIN_UPLOAD_MS
+    const elapsed = Date.now() - started
+    if (elapsed < MIN_UPLOAD_MS) {
+      await new Promise((r) => setTimeout(r, MIN_UPLOAD_MS - elapsed))
+    }
+    clearInterval(timer)
+
+    // 最后 10% 在接口真正返回（特别是慢接口）时才补满到 100%
+    setUploadProgress(100)
+    await new Promise((r) => setTimeout(r, 300))
+
+    if (res.status) {
       save(record)
       setSelected([])
       setInDiskId(null)
       setOutDiskId(null)
-      setSubmitOpen(false)
-      setSelOpen(false)
-      setSuccessOpen(true)
+      setUploadStage('success')
     } else {
-      showToast('提交失败：' + res.msg)
+      setUploadError(res.msg || '提交失败，请重试')
+      setUploadStage('failed')
     }
   }
 
@@ -253,8 +299,8 @@ export default function App() {
 
   return (
     <>
-      {/* 主界面：弹出成功页时用 display:none 彻底隔离，避免滚轮穿透到背景 */}
-      <div id="main" style={{ display: successOpen ? 'none' : '' }}>
+      {/* 主界面：上传界面展示时用 display:none 彻底隔离，避免滚轮穿透到背景 */}
+      <div id="main" style={{ display: uploadStage ? 'none' : '' }}>
         {/* 左右两侧固定广告栏：slot 来自 .env，仅 PC 端显示、移动端隐藏（见 index.css .ad-sidebar） */}
       {adSlotLeft && (
         <AdSlot slot={adSlotLeft} format="vertical" className="ad-sidebar ad-left" />
@@ -339,7 +385,7 @@ export default function App() {
       <SubmitDialog
         open={submitOpen}
         onClose={() => setSubmitOpen(false)}
-        onSubmit={doSubmit}
+        onSubmit={startUpload}
       />
 
       <HistoryDrawer
@@ -362,33 +408,22 @@ export default function App() {
       </div>
 
       {/* 与 #main 完全隔离的同层节点：显示时隐藏 #main，滚轮只作用于本窗口自身 */}
-      {successOpen && (
-        <div id="success-screen" className="success-screen">
-          <div className="success-inner">
-            <div className="success-check">✓</div>
-            <h2>提交成功</h2>
-            <p>商家将尽快与您联系</p>
-            {successStats && (
-              <CapacityBar
-                selectedCount={successStats.count}
-                selectedSize={successStats.size}
-                diskCap={successStats.cap}
-                remaining={successStats.remaining}
-                cornerLabel={platform}
-              />
-            )}
-            <AdSlot slot={adSlotTop} />
-            <button
-              className="btn btn-primary"
-              onClick={() => {
-                setSuccessOpen(false)
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-              }}
-            >
-              完成
-            </button>
-          </div>
-        </div>
+      {uploadStage && (
+        <UploadScreen
+          stage={uploadStage}
+          stats={successStats}
+          progress={uploadProgress}
+          errorMsg={uploadError}
+          adSlot={adSlotTop}
+          platform={platform}
+          onRetry={() => {
+            if (pendingForm.current) startUpload(pendingForm.current)
+          }}
+          onClose={() => {
+            setUploadStage(null)
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+        />
       )}
 
       {toast && <div className="toast">{toast}</div>}
